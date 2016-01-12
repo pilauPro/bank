@@ -1,14 +1,21 @@
 class Bank
-    attr_accessor :name, :accounts, :funds, :customers
+    attr_accessor :name, :id, :accounts, :funds, :customers
     
     @@banks = 0
+    @@bank_collection = []
     
     def initialize(name, funds)
         @name = name
         @funds = funds
         @customers = []
-        @@banks += 1
         @accounts = []
+        @@banks += 1
+        @id = @@banks
+        @@bank_collection << self
+    end
+    
+    def self.all_banks
+        @@bank_collection
     end
     
     def add_customer(name)
@@ -40,6 +47,7 @@ class Bank
     class Account
         @@current_checking = 1000
         @@current_savings = 5000
+        @@account_collection = []
         
         attr_accessor :custid, :account_number, :balance, :type
         
@@ -47,6 +55,7 @@ class Bank
             @custid = custid
             @balance = balance
             @type = type
+            @@account_collection << self
             
             if type == :savings
                 @@current_savings += 1
@@ -58,16 +67,29 @@ class Bank
                 @account_number = @@current_checking
             end
         end
+        
+        def self.all_accounts
+            @@account_collection
+        end
+        
     end
     
     class Customer
         @@custid = 0
+        @@customer_collection = []
+        
         attr_accessor :name, :custid, :accounts
+        
         def initialize(name)
             @@custid += 1
             @custid = @@custid
             @name = name
             @accounts = []
+            @@customer_collection << self
+        end
+        
+        def self.all_customers
+            @@customer_collection
         end
         
         def show_balance
@@ -110,13 +132,26 @@ class Bank
     end
 end
 
+class ATM
+    attr_accessor :bank, :customer, :account
+    def initialize(bankid, customerid, account_number)
+        bank = Bank.all_banks.detect{ |bank| bank.id == bankid.to_i }
+        customer = Bank::Customer.all_customers.detect{ |customer| customer.custid == customerid.to_i }
+        account = Bank::Account.all_accounts.detect{ |account| account.account_number == account_number.to_i }
+        if !bank || !customer || !account
+            raise "no account found"
+        else
+            @bank = bank
+            @customer = customer
+            @account = account
+        end
+    end
+end
+
 firstNational = Bank.new("First National", 1000000)
 credUnion = Bank.new("Credit Union", 500000)
 firstNational.add_customer("Matt Leininger")
 firstNational.add_customer("Heather Eicher")
-
-firstNational.show_funds
-
 
 matt = firstNational.customers.detect{|customer| customer.name == "Matt Leininger"}
 heather = firstNational.customers.detect{|customer| customer.name == "Heather Eicher"}
@@ -125,17 +160,44 @@ firstNational.add_account(matt.custid, 400000, :savings)
 firstNational.add_account(heather.custid, 105000, :checking)
 firstNational.add_account(heather.custid, 200340, :savings)
 
-matt_checking = firstNational.accounts.detect{|account| account.account_number == 1001}
+# **************************************************************************************************
+puts "**********DARK STAR ATM**********"
 
-matt.accounts.each{|account| puts account.balance}
-matt.show_balance
-matt.request_withdrawl(firstNational, matt_checking, 20000, 123)
-matt.show_balance
+connection = false
 
-firstNational.show_funds
+while connection == false
 
-puts matt_checking.balance
+    puts "Enter bank id:"
+    bankid = gets.chomp
+    
+    puts "Enter customer id:"
+    customerid = gets.chomp
+    
+    puts "Enter account number:"
+    account_number = gets.chomp
+    
+    begin
+        current = ATM.new(bankid, customerid, account_number)
+    rescue => e
+        puts "#{e}"
+    
+    else
+        puts "Connected to #{current.customer.name}'s #{current.bank.name} #{current.account.type} account"
+        connection = true
+    end
+end
 
-matt.request_deposit(firstNational, matt_checking, 1000000, 123)
+# matt_checking = firstNational.accounts.detect{|account| account.account_number == 1001}
 
-firstNational.show_funds
+# matt.accounts.each{|account| puts account.balance}
+# matt.show_balance
+# matt.request_withdrawl(firstNational, matt_checking, 20000, 123)
+# matt.show_balance
+
+# firstNational.show_funds
+
+# puts matt_checking.balance
+
+# matt.request_deposit(firstNational, matt_checking, 1000000, 123)
+
+# firstNational.show_funds
