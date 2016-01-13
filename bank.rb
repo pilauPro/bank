@@ -135,16 +135,14 @@ end
 class ATM
     attr_accessor :bank, :customer, :account
     def initialize(bankid, customerid, account_number)
-        bank = Bank.all_banks.detect{ |bank| bank.id == bankid.to_i }
-        customer = Bank::Customer.all_customers.detect{ |customer| customer.custid == customerid.to_i }
-        account = Bank::Account.all_accounts.detect{ |account| account.account_number == account_number.to_i }
-        if !bank || !customer || !account
-            raise "no account found"
-        else
-            @bank = bank
-            @customer = customer
-            @account = account
-        end
+    
+        raise "bank not recognized" if !bank = Bank.all_banks.detect{ |bank| bank.id == bankid.to_i }
+        raise "customer not found for #{bank.name} bank" if !customer = bank.customers.detect{ |customer| customer.custid == customerid.to_i }
+        raise "account \##{account_number} not found for #{customer.name} at #{bank.name}" if !account = bank.accounts.detect{ |account| account.account_number == account_number.to_i }
+        
+        @bank = bank
+        @customer = customer
+        @account = account
     end
 end
 
@@ -185,6 +183,24 @@ while connection == false
         puts "Connected to #{current.customer.name}'s #{current.bank.name} #{current.account.type} account"
         connection = true
     end
+end
+
+puts "Greetings, #{current.customer.name.split[0]}"
+puts "Deposit, withdraw, check balance, or exit?"
+
+action = gets.chomp.downcase
+
+case action
+when "d"
+    puts "Deposit"
+when "w"
+    puts "Withdraw"
+when "b"
+    puts "balance"
+when "e"
+    puts "exit"
+else
+    puts "invalid selection"
 end
 
 # matt_checking = firstNational.accounts.detect{|account| account.account_number == 1001}
