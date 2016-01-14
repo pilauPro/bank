@@ -86,28 +86,28 @@ class Bank
         def show_balance
             puts "Account \##{@account_number} balance is: #{@balance}"
         end
-        
-        def validated(account, amount)
-            true if amount <= account.balance
-        end
+    
+        private
         
         def deposit(amount)
-            self.transact(amount)
+            transact(amount)
         end
         
-        def withdrawl(amount, atm)
-            if validated(atm.account, amount) then
-                atm.account.balance -= amount
-                atm.bank.update_bank_funds(-amount)
+        def withdrawl(amount)
+            if validated(amount) then
+                @balance -= amount
+                # atm.bank.update_bank_funds(-amount)
             else
                 ATM.excess_withdrawl
             end
         end
         
-        protected
-        
         def transact(amount)
-            self.balance += amount
+            @balance += amount
+        end
+        
+        def validated(amount)
+            true if amount <= @balance
         end
     end
     
@@ -200,6 +200,8 @@ firstNational.add_account(matt.custid, 400000, :savings)
 credUnion.add_account(george.custid, 105000, :checking)
 credUnion.add_account(tom.custid, 200340, :savings)
 
+
+
 # **************************************************************************************************
 puts "**********DARK STAR ATM**********"
 
@@ -257,6 +259,8 @@ while continue
             withdrawl = gets.chomp.to_i
             raise "invalid withdrawl amount" if withdrawl <= 0
             current.withdraw_from_account(withdrawl)
+            puts "Withdrawl successful."
+            puts "New balance for account \##{current.account.account_number} is: #{current.account.balance}"
         rescue => e
             puts "#{e}"
         end
